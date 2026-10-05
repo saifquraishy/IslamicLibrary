@@ -17,6 +17,7 @@ interface PdfReaderProps {
   resumePage?: number;
   onToggleFavorite: () => void;
   onProgress: (page: number, totalPages: number) => void;
+  onPageViewed: (page: number, totalPages: number) => void;
 }
 
 type FitMode = 'width' | 'page';
@@ -26,7 +27,7 @@ function LoadingState({ message }: { message: string }) {
   return <div className="pdf-reader-state" role="status"><span className="reader-spinner" aria-hidden="true"/><span>{message}</span></div>;
 }
 
-export default function PdfReader({ book, isFavorite, resumePage, onToggleFavorite, onProgress }: PdfReaderProps) {
+export default function PdfReader({ book, isFavorite, resumePage, onToggleFavorite, onProgress, onPageViewed }: PdfReaderProps) {
   const readerRef = useRef<HTMLElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -164,7 +165,7 @@ export default function PdfReader({ book, isFavorite, resumePage, onToggleFavori
       {loadFailed ? <div className="pdf-reader-error"><h2>Unable to open this book.</h2><p>Please check your connection and try again.</p><div><button type="button" className="button-primary" onClick={retry}>Retry</button><Link className="button-secondary" to={'/books/'+encodeURIComponent(book.id)}>Back to book</Link></div></div> : <Document key={book.id+':'+retryToken} file={book.fileUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={failToLoad} loading={<LoadingState message="Loading PDF"/>} error={<div className="pdf-reader-error"><h2>Unable to open this book.</h2><p>Please try again.</p><button type="button" className="button-primary" onClick={retry}>Retry</button></div>}>
         <div className="pdf-page-wrap">
           {!pageRendered&&documentLoaded&&<div className="pdf-page-preparing" role="status">Preparing page {pageNumber}…</div>}
-          <Page pageNumber={pageNumber} width={pageWidth} onLoadSuccess={onPageLoadSuccess} onRenderSuccess={() => setPageRendered(true)} onRenderError={failToLoad} renderTextLayer renderAnnotationLayer loading={<LoadingState message={`Preparing page ${pageNumber}…`}/>}/>
+          <Page pageNumber={pageNumber} width={pageWidth} onLoadSuccess={onPageLoadSuccess} onRenderSuccess={() => {setPageRendered(true);onPageViewed(pageNumber,numPages);}} onRenderError={failToLoad} renderTextLayer renderAnnotationLayer loading={<LoadingState message={`Preparing page ${pageNumber}…`}/>}/>
         </div>
       </Document>}
     </section>
