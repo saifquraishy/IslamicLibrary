@@ -4,11 +4,13 @@ import { ArrowLeft, ArrowUpRight, BookMarked, BookOpen, Bookmark, Check, Chevron
 import { categories } from './data/categories';
 import { getBookById, getBooks, searchBooks } from './data/repository';
 import type { Book } from './types/book';
+import PdfReader from './components/PdfReader';
 
 const FAVORITES_KEY = 'favoriteBookIds';
 const RECENT_KEY = 'recentBooks';
 const categoryIcons = { BookOpen, ScrollText, Compass, Sparkles, Scale, Sun, HandHeart, Moon, Map: MapIcon, UsersRound, Heart, Landmark, Flower2, Cloud, Shield, LibraryBig, ClipboardCheck };
 interface RecentBook { bookId: string; lastOpened: number; }
+interface ReadingProgress { page: number; totalPages?: number; updatedAt: string; }
 interface Collection { key: string; slug: string; category: string; name: string; books: Book[]; volumeCount: number; }
 
 function readArray(key: string): unknown[] {
@@ -26,6 +28,26 @@ function readRecent(): RecentBook[] {
   const legacy = readArray('islamic-library-recent').filter((value): value is string => typeof value === 'string').map(bookId => ({ bookId, lastOpened: 0 }));
   if (legacy.length) localStorage.setItem(RECENT_KEY, JSON.stringify(legacy));
   return legacy;
+}
+function readProgress(): Record<string, ReadingProgress> {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem('readingProgress') || '{}');
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, ReadingProgress] => {
+      const item = entry[1];
+      return typeof item === 'object' && item !== null && typeof (item as ReadingProgress).page === 'number' && typeof (item as ReadingProgress).updatedAt === 'string';
+    }));
+  } catch { return {}; }
+}
+function touchRecent(bookId: string) {
+  const next = [{ bookId, lastOpened: Date.now() }, ...readRecent().filter(item => item.bookId !== bookId)].slice(0, 10);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+}
+function saveProgress(bookId: string, page: number, totalPages: number): ReadingProgress {
+  const progress = { ...readProgress(), [bookId]: { page, totalPages, updatedAt: new Date().toISOString() } };
+  localStorage.setItem('readingProgress', JSON.stringify(progress));
+  touchRecent(bookId);
+  return progress[bookId];
 }
 function useCatalogue() {
   const [books,setBooks]=useState<Book[]>([]); const [error,setError]=useState(false);
@@ -59,7 +81,7 @@ function BookCover({book,className=''}:{book:Book,className?:string}) {
 }
 function BookCard({book,favorites,toggle}:{book:Book,favorites:string[],toggle:(id:string)=>void}) {
   const fav=favorites.includes(book.id);
-  return <article className="book-card"><Link className="book-card-main" to={'/books/'+encodeURIComponent(book.id)} aria-label={'View details for '+book.title}><BookCover book={book}/><div className="book-card-copy"><h3>{book.title}</h3>{book.author&&<p className="book-author">{book.author}</p>}<p>{book.subcategory||book.category}</p>{book.volume!==undefined&&<small>Volume {book.volume}</small>}</div></Link><div className="book-card-actions"><button className={'favorite icon-button '+(fav?'is-favorite':'')} onClick={()=>toggle(book.id)} aria-label={fav?'Remove '+book.title+' from favorites':'Add '+book.title+' to favorites'} title={fav?'Remove from favorites':'Add to favorites'}>{fav?<Heart size={17} fill="currentColor"/>:<Bookmark size={17}/>}</button><Link className="text-link" to={'/books/'+encodeURIComponent(book.id)+'/read'}>Read <ChevronRight size={15}/></Link></div></article>;
+  return <article className="book-card"><Link className="book-card-main" to={'/books/'+encodeURIComponent(book.id)} aria-label={'View details for '+book.title}><BookCover book={book}/><div className="book-card-copy"><h3>{book.title}</h3>{book.author&&<p className="book-author">{book.author}</p>}<p>{book.subcategory||book.category}</p>{book.volume!==undefined&&<small>Volume {book.volume}</small>}</div></Link><div className="book-card-actions"><button className={'favorite icon-button '+(fav?'is-favorite':'')} onClick={()=>toggle(book.id)} aria-label={fav?'Remove '+book.title+' from favorites':'Add '+book.title+' to favorites'} title={fav?'Remove from favorites':'Add to favorites'}>{fav?<Heart size={17} fill="currentColor"/>:<Bookmark size={17}/>}</button><Link className="text-link" to={'/read/'+encodeURIComponent(book.id)}>Read <ChevronRight size={15}/></Link></div></article>;
 }
 function BookGrid({books,favorites,toggle,empty='No books found'}:{books:Book[],favorites:string[],toggle:(id:string)=>void,empty?:string}) {
   if(!books.length)return <div className="empty-state"><span className="empty-icon"><BookMarked/></span><h3>{empty}</h3><p>{empty==='No favorites yet'?'Bookmark books you want to easily find later.':'Try a different search term.'}</p></div>;
@@ -68,8 +90,8 @@ function BookGrid({books,favorites,toggle,empty='No books found'}:{books:Book[],
 function BookShelf({books,favorites,toggle}:{books:Book[],favorites:string[],toggle:(id:string)=>void}) {
   return <div className="book-shelf" role="region" tabIndex={0} aria-label="Recently added books">{books.map(book=><div className="book-shelf-item" key={book.id}><BookCard book={book} favorites={favorites} toggle={toggle}/></div>)}</div>;
 }
-function ContinueReading({books,allRecent,favorites,toggle}:{books:Book[],allRecent:Book[],favorites:string[],toggle:(id:string)=>void}) {
-  return <section className="page-section continue-section"><div className="section-heading-row"><SectionTitle eyebrow="CONTINUE READING" title="Pick up where you left off"/><div className="section-heading-actions">{allRecent.length>4&&<Link className="quiet-link" to="/recently-read">View all <ArrowUpRight size={16}/></Link>}</div></div><div className="continue-grid">{books.slice(0,4).map(book=><article className="continue-card" key={book.id}><Link className="continue-cover" to={'/books/'+encodeURIComponent(book.id)+'/read'} aria-label={'Continue reading '+book.title}><BookCover book={book}/></Link><div className="continue-copy"><span className="eyebrow">{book.category}</span><Link to={'/books/'+encodeURIComponent(book.id)+'/read'}><strong>{book.title}</strong></Link>{book.author&&<small>{book.author}</small>}<Link className="text-link" to={'/books/'+encodeURIComponent(book.id)+'/read'}>Continue reading <ChevronRight size={15}/></Link></div><button className={'favorite icon-button '+(favorites.includes(book.id)?'is-favorite':'')} onClick={()=>toggle(book.id)} aria-label={favorites.includes(book.id)?'Remove '+book.title+' from favorites':'Add '+book.title+' to favorites'} title={favorites.includes(book.id)?'Remove from favorites':'Add to favorites'}>{favorites.includes(book.id)?<Heart size={16} fill="currentColor"/>:<Bookmark size={16}/>}</button></article>)}</div></section>;
+function ContinueReading({books,allRecent,favorites,toggle,progress}:{books:Book[],allRecent:Book[],favorites:string[],toggle:(id:string)=>void,progress:Record<string,ReadingProgress>}) {
+  return <section className="page-section continue-section"><div className="section-heading-row"><SectionTitle eyebrow="CONTINUE READING" title="Pick up where you left off"/><div className="section-heading-actions">{allRecent.length>4&&<Link className="quiet-link" to="/recently-read">View all <ArrowUpRight size={16}/></Link>}</div></div><div className="continue-grid">{books.slice(0,4).map(book=>{const saved=progress[book.id];const readerPath='/read/'+encodeURIComponent(book.id);return <article className="continue-card" key={book.id}><Link className="continue-cover" to={readerPath} aria-label={'Continue reading '+book.title}><BookCover book={book}/></Link><div className="continue-copy"><span className="eyebrow">{book.category}</span><Link to={readerPath}><strong>{book.title}</strong></Link>{book.author&&<small>{book.author}</small>}{saved&&<small className="continue-progress">Page {saved.page}{saved.totalPages?` / ${saved.totalPages}`:''}</small>}<Link className="text-link" to={readerPath}>Continue <ChevronRight size={15}/></Link></div><button className={'favorite icon-button '+(favorites.includes(book.id)?'is-favorite':'')} onClick={()=>toggle(book.id)} aria-label={favorites.includes(book.id)?'Remove '+book.title+' from favorites':'Add '+book.title+' to favorites'} title={favorites.includes(book.id)?'Remove from favorites':'Add to favorites'}>{favorites.includes(book.id)?<Heart size={16} fill="currentColor"/>:<Bookmark size={16}/>}</button></article>;})}</div></section>;
 }
 function SectionTitle({eyebrow,title,detail}:{eyebrow?:string,title:string,detail?:string}){return <div className="section-title">{eyebrow&&<span className="eyebrow">{eyebrow}</span>}<h2>{title}</h2>{detail&&<p>{detail}</p>}</div>;}
 function CategoryCards({books}:{books:Book[]}) {
@@ -83,9 +105,10 @@ function Home({books,favorites,toggle}:{books:Book[],favorites:string[],toggle:(
   const navigate=useNavigate();const [query,setQuery]=useState('');const collections=getCollections(books);
   const allRecent=readRecent().map(item=>books.find(book=>book.id===item.bookId)).filter((book):book is Book=>Boolean(book));
   const recent=allRecent.slice(0,4);
+  const progress=readProgress();
   const recentlyAdded=[...books].sort((a,b)=>(b.sourceModifiedAt??0)-(a.sourceModifiedAt??0)).slice(0,6);
   return <main><section className="hero"><div className="hero-inner"><span className="eyebrow hero-eyebrow">A PERSONAL COLLECTION</span><h1>Islamic Library</h1><p>Explore the collection</p><form className="hero-search" onSubmit={e=>{e.preventDefault();navigate('/search?q='+encodeURIComponent(query));}}><Search size={20}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search books..." aria-label="Search books"/><button aria-label="Search"><ArrowUpRight size={19}/></button></form><div className="collection-note"><span className="note-dot"/>{books.length} books in the collection</div></div><div className="hero-decoration" aria-hidden="true"><div className="sun-disc"/><div className="arch-outer"><div className="arch-inner"><BookOpen size={58} strokeWidth={1}/></div></div></div></section>
-    {recent.length>0&&<ContinueReading books={recent} allRecent={allRecent} favorites={favorites} toggle={toggle}/>}
+    {recent.length>0&&<ContinueReading books={recent} allRecent={allRecent} favorites={favorites} toggle={toggle} progress={progress}/>}
     {recentlyAdded.length>0&&<section className="page-section recent-section"><div className="section-heading-row"><SectionTitle eyebrow="RECENTLY ADDED" title="Featured books" detail="Explore books from your collection."/><Link className="quiet-link" to="/books">View all <ArrowUpRight size={16}/></Link></div><BookShelf books={recentlyAdded} favorites={favorites} toggle={toggle}/></section>}
     <section className="page-section"><div className="section-heading-row"><SectionTitle eyebrow="EXPLORE THE COLLECTION" title="Browse categories" detail="Find a book by subject."/><Link className="quiet-link" to="/categories">All categories <ArrowUpRight size={16}/></Link></div><CategoryCards books={books}/></section>
     {collections.length>0&&<section className="page-section"><div className="section-heading-row"><SectionTitle eyebrow="MULTI-VOLUME SUBJECTS" title="Major collections" detail="Explore verified multi-volume works."/><Link className="quiet-link" to="/collections">All collections <ArrowUpRight size={16}/></Link></div><CollectionCards collections={collections} limit={6}/></section>}
@@ -125,34 +148,22 @@ function BookDetails({favorites,toggle}:{favorites:string[],toggle:(id:string)=>
   if(loading)return <main className="content-page"><p className="loading-text">Loading book…</p></main>;
   if(!book)return <main className="content-page"><div className="empty-state"><h3>Book not found</h3><Link className="button-primary" to="/">Return home</Link></div></main>;
   const fav=favorites.includes(book.id);
-  return <main className="content-page detail-page"><div className="breadcrumbs"><Link to="/">Home</Link><ChevronRight size={14}/><Link to={'/categories/'+encodeURIComponent(book.category)}>{book.category}</Link>{book.collection&&<><ChevronRight size={14}/><Link to={'/collections/'+slugify(book.category+' '+book.collection)}>{book.collection}</Link></>}</div><div className="detail-card"><BookCover book={book} className="detail-book-cover"/><div className="detail-copy"><span className="eyebrow">{book.category}{book.subcategory?' · '+book.subcategory:''}</span><h1>{book.title}</h1><p className="file-label"><FileText size={16}/>{book.fileType.toUpperCase()}</p>{book.author&&<p>By {book.author}</p>}{book.volume!==undefined&&<p>Volume {book.volume}</p>}{book.description&&<p>{book.description}</p>}<div className="detail-actions"><Link className="button-primary" to={'/books/'+encodeURIComponent(book.id)+'/read'}><BookOpen size={17}/>Read book</Link><button className={'button-secondary '+(fav?'is-favorite':'')} onClick={()=>toggle(book.id)}>{fav?<Check size={17}/>:<Bookmark size={17}/>} {fav?'Saved to favorites':'Add to favorites'}</button></div></div></div></main>;
+  return <main className="content-page detail-page"><div className="breadcrumbs"><Link to="/">Home</Link><ChevronRight size={14}/><Link to={'/categories/'+encodeURIComponent(book.category)}>{book.category}</Link>{book.collection&&<><ChevronRight size={14}/><Link to={'/collections/'+slugify(book.category+' '+book.collection)}>{book.collection}</Link></>}</div><div className="detail-card"><BookCover book={book} className="detail-book-cover"/><div className="detail-copy"><span className="eyebrow">{book.category}{book.subcategory?' · '+book.subcategory:''}</span><h1>{book.title}</h1><p className="file-label"><FileText size={16}/>{book.fileType.toUpperCase()}</p>{book.author&&<p>By {book.author}</p>}{book.volume!==undefined&&<p>Volume {book.volume}</p>}{book.description&&<p>{book.description}</p>}<div className="detail-actions"><Link className="button-primary" to={'/read/'+encodeURIComponent(book.id)}><BookOpen size={17}/>Read book</Link><button className={'button-secondary '+(fav?'is-favorite':'')} onClick={()=>toggle(book.id)}>{fav?<Check size={17}/>:<Bookmark size={17}/>} {fav?'Saved to favorites':'Add to favorites'}</button></div></div></div></main>;
 }
 function Reader({favorites,toggle}:{favorites:string[],toggle:(id:string)=>void}) {
-  const {id}=useParams();const {book,loading}=useBook(id);const [failed,setFailed]=useState(false);const [pdfSource,setPdfSource]=useState<string>();const [pdfLoading,setPdfLoading]=useState(false);
-  useEffect(()=>{if(!id)return;const bookId=decodeURIComponent(id);const next=[{bookId,lastOpened:Date.now()},...readRecent().filter(item=>item.bookId!==bookId)].slice(0,10);localStorage.setItem(RECENT_KEY,JSON.stringify(next));},[id]);
-  useEffect(()=>{
-    setFailed(false);setPdfSource(undefined);
-    if(!book||book.fileType!=='pdf'){setPdfLoading(false);return;}
-    const source=new URL(book.fileUrl,window.location.href);
-    if(source.origin===window.location.origin){setPdfSource(source.href);setPdfLoading(false);return;}
-    let active=true;let objectUrl:string|undefined;setPdfLoading(true);
-    fetch(source.href).then(response=>{if(!response.ok)throw new Error('Unable to download the PDF');return response.blob();}).then(blob=>{
-      objectUrl=URL.createObjectURL(new Blob([blob],{type:'application/pdf'}));
-      if(active)setPdfSource(objectUrl);
-    }).catch(()=>{if(active)setFailed(true);}).finally(()=>{if(active)setPdfLoading(false);});
-    return()=>{active=false;if(objectUrl)URL.revokeObjectURL(objectUrl);};
-  },[book?.fileUrl,book?.fileType]);
-  if(loading)return <main className="reader-page"><p>Loading reader…</p></main>;
-  if(!book)return <main className="reader-page"><p>Book not found.</p></main>;
-  const fav=favorites.includes(book.id);
-  return <main className="reader-page"><div className="reader-toolbar"><Link className="reader-back" to={'/books/'+encodeURIComponent(book.id)}><ArrowLeft size={18}/><span>Back</span></Link><strong>{book.title}</strong><div className="reader-toolbar-actions"><button className={'favorite icon-button '+(fav?'is-favorite':'')} onClick={()=>toggle(book.id)} aria-label={fav?'Remove from favorites':'Add to favorites'}>{fav?<Heart size={18} fill="currentColor"/>:<Bookmark size={18}/>}</button><a className="reader-open" href={book.fileUrl} target="_blank" rel="noreferrer">Open PDF <ArrowUpRight size={16}/></a></div></div>{failed?<div className="reader-error"><FileText size={34}/><h2>Unable to open this book.</h2><p>The book file may have been moved or is unavailable.</p><a className="button-secondary" href={book.fileUrl} target="_blank" rel="noreferrer">Try opening the file</a></div>:book.fileType==='pdf'?pdfLoading?<div className="reader-loading">Loading PDFâ€¦</div>:pdfSource?<iframe title={'PDF reader: '+book.title} src={pdfSource} className="pdf-frame" onError={()=>setFailed(true)}/>:<div className="reader-loading">Preparing PDFâ€¦</div>:<div className="reader-error"><FileText size={34}/><h2>This file type cannot be previewed in the browser.</h2><p>Download or open the document to continue reading.</p><a className="button-primary" href={book.fileUrl} target="_blank" rel="noreferrer">Open file <ArrowUpRight size={16}/></a></div>}</main>;
-}
-export default function App() {
+  const {id,bookId}=useParams();const routeBookId=bookId??id;const {book,loading}=useBook(routeBookId);const [savedProgress,setSavedProgress]=useState<ReadingProgress>();
+  useEffect(()=>{if(routeBookId)touchRecent(decodeURIComponent(routeBookId));},[routeBookId]);
+  useEffect(()=>{if(book)setSavedProgress(readProgress()[book.id]);},[book?.id]);
+  if(loading)return <main className="pdf-reader"><div className="pdf-reader-state" role="status"><span className="reader-spinner" aria-hidden="true"/>Loading book...</div></main>;
+  if(!book)return <main className="pdf-reader"><div className="pdf-reader-error"><h2>Unable to open this book.</h2><p>This book could not be found in the library.</p><Link className="button-secondary" to="/">Back to library</Link></div></main>;
+  if(book.fileType!=='pdf')return <main className="reader-page"><div className="reader-toolbar"><Link className="reader-back" to={'/books/'+encodeURIComponent(book.id)}><ArrowLeft size={18}/><span>Back</span></Link><strong>{book.title}</strong></div><div className="reader-error"><FileText size={34}/><h2>This file type cannot be previewed in the browser.</h2><p>Download or open the document to continue reading.</p><a className="button-primary" href={book.fileUrl} target="_blank" rel="noreferrer">Open file <ArrowUpRight size={16}/></a></div></main>;
+  return <PdfReader book={book} resumePage={savedProgress?.page} isFavorite={favorites.includes(book.id)} onToggleFavorite={()=>toggle(book.id)} onProgress={(page,totalPages)=>setSavedProgress(saveProgress(book.id,page,totalPages))}/>;
+}export default function App() {
   const {books,error}=useCatalogue();const [favorites,setFavorites]=useState<string[]>(()=>readFavorites());
   const [theme,setTheme]=useState<'light'|'dark'>(()=>localStorage.getItem('theme')==='dark'?'dark':'light');
   useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem('theme',theme);},[theme]);
   const toggleTheme=()=>setTheme(current=>current==='light'?'dark':'light');
   const toggle=(id:string)=>setFavorites(current=>{const next=current.includes(id)?current.filter(value=>value!==id):[id,...current];localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));return next;});
   const wrap=(page:ReactNode)=><Shell books={books} theme={theme} toggleTheme={toggleTheme}>{error&&<div className="catalogue-error">The book catalogue could not be loaded. Please refresh the page.</div>}{page}</Shell>;
-  return <Routes><Route path="/books/:id/read" element={<Reader favorites={favorites} toggle={toggle}/>}/><Route path="/" element={wrap(<Home books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/about" element={wrap(<AboutPage/>)}/><Route path="/books" element={wrap(<CataloguePage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/recently-read" element={wrap(<RecentBooksPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/categories" element={wrap(<CategoryIndex books={books}/>)}/><Route path="/categories/:category" element={wrap(<CategoryPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/collections" element={wrap(<CollectionsIndex books={books}/>)}/><Route path="/collections/:collection" element={wrap(<CollectionPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/search" element={wrap(<SearchPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/favorites" element={wrap(<FavoritesPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/books/:id" element={wrap(<BookDetails favorites={favorites} toggle={toggle}/>)}/><Route path="*" element={wrap(<main className="content-page"><SectionTitle title="Page not found"/><Link to="/">Return home</Link></main>)}/></Routes>;
+  return <Routes><Route path="/read/:bookId" element={<Reader favorites={favorites} toggle={toggle}/>}/><Route path="/books/:id/read" element={<Reader favorites={favorites} toggle={toggle}/>}/><Route path="/" element={wrap(<Home books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/about" element={wrap(<AboutPage/>)}/><Route path="/books" element={wrap(<CataloguePage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/recently-read" element={wrap(<RecentBooksPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/categories" element={wrap(<CategoryIndex books={books}/>)}/><Route path="/categories/:category" element={wrap(<CategoryPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/collections" element={wrap(<CollectionsIndex books={books}/>)}/><Route path="/collections/:collection" element={wrap(<CollectionPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/search" element={wrap(<SearchPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/favorites" element={wrap(<FavoritesPage books={books} favorites={favorites} toggle={toggle}/>)}/><Route path="/books/:id" element={wrap(<BookDetails favorites={favorites} toggle={toggle}/>)}/><Route path="*" element={wrap(<main className="content-page"><SectionTitle title="Page not found"/><Link to="/">Return home</Link></main>)}/></Routes>;
 }
