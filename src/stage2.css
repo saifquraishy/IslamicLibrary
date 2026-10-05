@@ -1,0 +1,97 @@
+/* Cover-focused cards introduced in the visual catalogue stage. */
+.book-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}
+.book-card{min-height:0;padding:10px;border-radius:12px;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.book-card:hover{transform:translateY(-3px);box-shadow:0 8px 22px #293a3012;border-color:#d8d9ce}
+.book-card-cover-link{display:block;width:100%;border-radius:8px;overflow:hidden}
+.book-cover{width:100%;aspect-ratio:3/4;background:#eeeee7;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.book-cover img{width:100%;height:100%;object-fit:contain;display:block}
+.cover-fallback{height:100%;width:100%;padding:18px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;text-align:center;color:#56705c;background:linear-gradient(150deg,#eef1e9,#e5e9df)}
+.cover-fallback strong{font:600 13px Manrope,sans-serif;line-height:1.4;color:#34463a;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.cover-fallback span{font-size:10px;color:#738075;line-height:1.35}
+.book-card-copy{margin:11px 2px 8px;min-height:48px}
+.book-card-main{display:block;color:inherit;text-decoration:none;min-width:0}
+.book-card-main:focus-visible,.continue-card a:focus-visible,.book-shelf:focus-visible{outline:2px solid #789478;outline-offset:3px;border-radius:8px}
+.book-card h3{font-size:12px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.book-card-copy p{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-card-copy .book-author{color:#7b8178}
+.book-card-copy small{font-size:9px;color:#848a80}
+.book-card-actions{display:flex;align-items:center;justify-content:space-between;width:100%;border-top:1px solid #eeede5;padding:7px 1px 0}
+.book-card-actions .favorite{position:static;width:29px;height:28px}
+.book-card-actions .text-link{margin:0 1px 0 auto}
+.detail-card{grid-template-columns:minmax(190px,270px) 1fr;align-items:start}
+.detail-book-cover{max-width:270px}
+.collection-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.collection-card{min-height:82px;border:1px solid #e9e7de;background:#fbfaf6;border-radius:10px;padding:13px;display:grid;grid-template-columns:64px minmax(0,1fr) 18px;align-items:center;gap:10px;transition:border-color .15s,transform .15s}
+.collection-card:hover{border-color:#c9c9b9;transform:translateY(-1px)}
+.collection-previews{display:flex;align-items:center;padding-left:7px}
+.collection-preview{width:32px;height:44px;margin-left:-7px;border-radius:4px;overflow:hidden;box-shadow:0 1px 4px #0002;border:1px solid #fff}
+.collection-preview .book-cover{height:100%;aspect-ratio:auto;border-radius:0}
+.collection-preview .cover-fallback{padding:2px;gap:2px}
+.collection-preview .cover-fallback svg,.collection-preview .cover-fallback span{display:none}
+.collection-preview .cover-fallback strong{font-size:5px;-webkit-line-clamp:3}
+.collection-card-copy{min-width:0}
+.collection-card strong{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.collection-card small{display:block;font-size:10px;color:#858a80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.collection-card>svg{color:#a0a398}
+.book-shelf{display:flex;gap:14px;overflow-x:auto;overscroll-behavior-inline:contain;padding:2px 2px 14px;scroll-snap-type:x proximity;scrollbar-width:thin;max-width:100%}
+.book-shelf-item{flex:0 0 174px;scroll-snap-align:start;min-width:0}
+.book-shelf-item .book-card{height:100%}
+.continue-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.continue-card{position:relative;min-width:0;display:grid;grid-template-columns:54px minmax(0,1fr) 28px;gap:10px;align-items:center;padding:11px;border:1px solid #e9e7de;border-radius:11px;background:#fbfaf6}
+.continue-cover{width:54px;height:72px;overflow:hidden;border-radius:5px}
+.continue-cover .book-cover{height:100%;aspect-ratio:auto;border-radius:5px}
+.continue-cover .cover-fallback{padding:3px;gap:2px}
+.continue-cover .cover-fallback svg,.continue-cover .cover-fallback span{display:none}
+.continue-cover .cover-fallback strong{font-size:7px;-webkit-line-clamp:4}
+.continue-copy{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.continue-copy .eyebrow{font-size:8px}
+.continue-copy>a:not(.text-link){color:inherit;text-decoration:none;min-width:0;max-width:100%}
+.continue-copy strong{font-size:11px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.continue-copy small{font-size:9px;color:#858a80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.continue-copy .text-link{font-size:9px;margin-top:2px}
+.continue-card>.favorite{position:static;width:28px;height:28px}
+.section-heading-actions{display:flex;align-items:center;gap:10px}
+.reader-toolbar-actions{display:flex;align-items:center;justify-self:end;gap:11px}
+.reader-toolbar-actions .favorite{position:static}
+.reader-toolbar .reader-open{justify-self:auto}
+.theme-toggle{width:34px;height:34px;flex:none;border-radius:8px}
+.theme-toggle:hover{background:#eeeee7;color:#345943}
+.category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(min-width:1200px){.book-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:1199px){.book-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:900px){.book-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.collection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.continue-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.book-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.book-card{padding:7px}.book-cover{border-radius:7px}.book-card-copy{margin:8px 1px 6px;min-height:44px}.book-card h3{font-size:11px}.book-card-copy p{font-size:9px}.book-card-actions{padding-top:5px}.book-card-actions .text-link{font-size:10px}.category-grid{grid-template-columns:1fr}.category-card{padding:10px;min-height:67px;gap:8px}.category-mark{width:32px;height:32px}.category-card-text strong{font-size:10px}.category-card-text small{font-size:9px}.category-arrow{width:14px}.collection-grid{grid-template-columns:1fr}.collection-card{grid-template-columns:56px minmax(0,1fr) 16px;gap:8px;padding:11px}.collection-preview{width:28px;height:40px}.continue-grid{grid-template-columns:1fr}.continue-card{grid-template-columns:52px minmax(0,1fr) 28px}.book-shelf{gap:10px;margin-right:-2px}.book-shelf-item{flex-basis:153px}.detail-card{grid-template-columns:1fr}.detail-book-cover{width:min(70%,260px);margin:auto}.theme-toggle{width:31px;height:34px}.header-inner{gap:6px}.brand{font-size:12px}.brand-icon{width:31px;height:31px}.header-search{min-width:32px}.reader-toolbar{grid-template-columns:auto 1fr auto}.reader-toolbar-actions{gap:5px}.reader-toolbar-actions .favorite{width:27px;height:28px}.reader-toolbar .reader-open{font-size:0}.reader-toolbar .reader-open svg{width:17px;height:17px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+html[data-theme=dark]{color-scheme:dark;background:#1d2420;color:#e4e8e2}
+html[data-theme=dark] body{background:#1d2420;color:#e4e8e2}
+html[data-theme=dark] .site-header,html[data-theme=dark] .nav{background:rgba(31,39,34,.96);border-color:#39443c}
+html[data-theme=dark] .brand,html[data-theme=dark] .section-title h2,html[data-theme=dark] .content-page>.section-title h2,html[data-theme=dark] .book-card h3,html[data-theme=dark] .collection-card strong,html[data-theme=dark] .subgroup-heading h2{color:#e2e9e1}
+html[data-theme=dark] .brand small,html[data-theme=dark] .nav>a,html[data-theme=dark] .section-title p,html[data-theme=dark] .book-card p,html[data-theme=dark] .collection-card small{color:#a5b0a5}
+html[data-theme=dark] .hero{background:#29372e}
+html[data-theme=dark] .hero h1{color:#edf1ea}
+html[data-theme=dark] .hero p,html[data-theme=dark] .collection-note{color:#bdc8bc}
+html[data-theme=dark] .sun-disc{background:#344239}
+html[data-theme=dark] .category-card,html[data-theme=dark] .book-card,html[data-theme=dark] .collection-card,html[data-theme=dark] .detail-card,html[data-theme=dark] .empty-state{background:#28312b;border-color:#3b473e}
+html[data-theme=dark] .category-mark,html[data-theme=dark] .book-symbol,html[data-theme=dark] .collection-icon,html[data-theme=dark] .empty-icon{background:#35443a;color:#b4c9b4}
+html[data-theme=dark] .book-cover{background:#303b33}
+html[data-theme=dark] .cover-fallback{background:linear-gradient(150deg,#334238,#2b372f);color:#b9ceb9}
+html[data-theme=dark] .cover-fallback strong{color:#e1e9df}
+html[data-theme=dark] .cover-fallback span{color:#b1bdb1}
+html[data-theme=dark] .book-card-actions{border-color:#3a453d}
+html[data-theme=dark] .hero-search,html[data-theme=dark] .header-search,html[data-theme=dark] .results-search{background:#202923;border-color:#3d4940;color:#aeb9ad}
+html[data-theme=dark] .header-search input,html[data-theme=dark] .hero-search input,html[data-theme=dark] .results-search input{color:#e2e9e1}
+html[data-theme=dark] .header-search input::placeholder,html[data-theme=dark] .hero-search input::placeholder,html[data-theme=dark] .results-search input::placeholder{color:#9ca99d}
+html[data-theme=dark] .footer{border-color:#39443c;color:#a5b0a5}
+html[data-theme=dark] .breadcrumbs{color:#9aa69a}
+html[data-theme=dark] .breadcrumbs span{color:#d2ddd1}
+html[data-theme=dark] .reader-page{background:#202923}
+html[data-theme=dark] .reader-toolbar{background:#28312b;border-color:#3b473e;color:#e2e9e1}
+html[data-theme=dark] .reader-toolbar strong{color:#e2e9e1}
+html[data-theme=dark] .detail-copy h1,html[data-theme=dark] .empty-state h3{color:#e2e9e1}
+html[data-theme=dark] .button-secondary{border-color:#4a594c;color:#c5d6c5}
+html[data-theme=dark] .theme-toggle:hover,html[data-theme=dark] .favorite{background:#354139}
+html[data-theme=dark] .nav>a.active{color:#c1d6c0}
+html[data-theme=dark] .continue-card{background:#28312b;border-color:#3b473e}
+html[data-theme=dark] .continue-copy small,html[data-theme=dark] .collection-card small{color:#a5b0a5}
+@media(max-width:640px){html[data-theme=dark] .nav{background:#202923;border-color:#39443c}html[data-theme=dark] .nav>a{border-color:#39443c}}
