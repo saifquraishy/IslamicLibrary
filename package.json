@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run generate-books && npm run generate-covers && tsc -b && vite build",
+    "build:pages": "tsc -b && vite build --mode pages && node scripts/prepare-pages.js",
     "preview": "vite preview",
     "generate-books": "node scripts/generate-books.js",
     "generate-covers": "node scripts/generate-covers.js"

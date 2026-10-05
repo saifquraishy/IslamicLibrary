@@ -26,9 +26,11 @@ function decodeEncodedAmpersands() {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === 'pages' ? '/IslamicLibrary/' : '/',
+  publicDir: mode === 'pages' ? false : 'public',
   plugins: [decodeEncodedAmpersands(), react()],
   server: {
     allowedHosts: ['glorious-toad-current.ngrok-free.app'],
   },
-});
+}));

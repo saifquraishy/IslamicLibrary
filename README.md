@@ -33,3 +33,9 @@ Folders can use numeric prefixes to keep a preferred order, for example `02 - Ha
 The homepage's “Recently added” section is ordered by the source files' filesystem modification times. These are file timestamps, not publication dates.
 
 Only supplied catalogue metadata is shown; authors or descriptions are never inferred from filenames.
+
+## Deploying to GitHub Pages
+
+The repository includes a GitHub Actions workflow that builds and deploys the app to `https://saifquraishy.github.io/IslamicLibrary/` whenever `main` is updated. In **Settings → Pages → Build and deployment**, set **Source** to **GitHub Actions**.
+
+The Pages build publishes the app, catalogue and cover images, but leaves the large book files out of the site artifact. Since this repository is public, readers fetch those files from its Git LFS media URLs. This keeps the published Pages site below GitHub's site-size limit.
