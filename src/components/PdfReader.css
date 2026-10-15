@@ -2,6 +2,10 @@
 .pdf-reader-header{height:58px;min-height:58px;display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr) minmax(40px,1fr);align-items:center;gap:14px;padding:0 20px;background:#faf9f5;border-bottom:1px solid #deddd4}
 .pdf-reader-header>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font:600 13px Manrope,sans-serif;color:#303c33}
 .pdf-reader-back{min-width:0;display:flex;align-items:center;gap:7px;color:#41574a;font-size:12px;font-weight:600;white-space:nowrap}
+.pdf-reader-actions{justify-self:end;display:flex;align-items:center;gap:7px}
+.pdf-reader-download{height:34px;padding:0 10px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #e0e2d9;border-radius:8px;background:#fff;color:#4b5b4d;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer}
+.pdf-reader-download:hover:not(:disabled){border-color:#b9c5b7;color:#21493b;background:#f2f4ee}
+.pdf-reader-download:disabled{opacity:.62;cursor:wait}
 .pdf-reader-favorite,.pdf-control-button{display:grid;place-items:center;border:1px solid #e0e2d9;border-radius:8px;background:#fff;color:#4b5b4d;cursor:pointer}
 .pdf-reader-favorite{justify-self:end;width:34px;height:34px}
 .pdf-reader-favorite:hover,.pdf-reader-favorite.is-favorite{color:#a2574b;background:#f6eae5}
@@ -40,7 +44,8 @@
 html[data-theme=dark] .pdf-reader{background:#202923;color:#e2e9e1}
 html[data-theme=dark] .pdf-reader-header,html[data-theme=dark] .pdf-reader-controls{background:#28312b;border-color:#3b473e}
 html[data-theme=dark] .pdf-reader-header>strong,html[data-theme=dark] .pdf-reader-back{color:#e2e9e1}
-html[data-theme=dark] .pdf-reader-favorite,html[data-theme=dark] .pdf-control-button,html[data-theme=dark] .pdf-page-label input{background:#202923;border-color:#435047;color:#d0dbcf}
+html[data-theme=dark] .pdf-reader-favorite,html[data-theme=dark] .pdf-reader-download,html[data-theme=dark] .pdf-control-button,html[data-theme=dark] .pdf-page-label input{background:#202923;border-color:#435047;color:#d0dbcf}
+html[data-theme=dark] .pdf-reader-download:hover:not(:disabled){background:#35443a;border-color:#4a5a4c;color:#d5e3d3}
 html[data-theme=dark] .pdf-zoom-level,html[data-theme=dark] .pdf-page-label,html[data-theme=dark] .pdf-fit-button{color:#bdc8bc}
 html[data-theme=dark] .pdf-fit-button.is-active,html[data-theme=dark] .pdf-fit-button:hover{background:#35443a;border-color:#4a5a4c;color:#d5e3d3}
 html[data-theme=dark] .pdf-reader-viewport{background:#1d2420}
@@ -50,11 +55,14 @@ html[data-theme=dark] .pdf-page-preparing{background:#28312b;border-color:#3b473
 html[data-theme=dark] .pdf-resume-banner{background:#2d3a31;border-color:#435247;color:#d4e2d2}
 html[data-theme=dark] .pdf-resume-banner .resume-dismiss{color:#c0cdbf}
 @media(max-width:640px){
-  .pdf-reader-header{height:54px;min-height:54px;grid-template-columns:36px minmax(0,1fr) 36px;gap:8px;padding:0 10px}
+  .pdf-reader-header{height:54px;min-height:54px;grid-template-columns:36px minmax(0,1fr) auto;gap:8px;padding:0 10px}
   .pdf-reader-back{width:34px;height:34px;justify-content:center;border-radius:8px}
   .pdf-reader-back span{display:none}
   .pdf-reader-header>strong{text-align:left;font-size:12px}
   .pdf-reader-favorite{width:33px;height:33px}
+  .pdf-reader-actions{gap:5px}
+  .pdf-reader-download{width:33px;height:33px;padding:0}
+  .pdf-reader-download span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   .pdf-reader-controls{order:3;min-height:60px;padding:7px 8px;display:grid;grid-template-columns:40px minmax(0,1fr) 40px 38px;gap:4px;border-top:1px solid #deddd4;border-bottom:0;padding-bottom:max(7px,env(safe-area-inset-bottom))}
   .pdf-zoom-controls{display:contents}
   .pdf-zoom-controls .pdf-control-button:first-child{grid-column:1;grid-row:1}

@@ -127,6 +127,10 @@ export function trackFavoriteRemoved(book: Pick<Book, 'id'>): void {
   emit('favorite_removed', { book_id: book.id });
 }
 
+export function trackBookDownloaded(book: Pick<Book, 'id'>): void {
+  emit('book_downloaded', { book_id: book.id });
+}
+
 export function startReadingSession(book: Pick<Book, 'id'>): void {
   sentMilestones.set(book.id, new Set<number>());
 }

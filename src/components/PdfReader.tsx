@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-import { ArrowLeft, Maximize, Minimize, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Download, Maximize, Minimize, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Bookmark, Heart } from 'lucide-react';
 import type { Book } from '../types/book';
+import { trackBookDownloaded } from '../lib/analytics';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import './PdfReader.css';
@@ -44,6 +45,7 @@ export default function PdfReader({ book, isFavorite, resumePage, onToggleFavori
   const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [retryToken, setRetryToken] = useState(0);
+  const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'done' | 'failed'>('idle');
 
   useEffect(() => {
     const element = viewportRef.current;
@@ -137,6 +139,31 @@ export default function PdfReader({ book, isFavorite, resumePage, onToggleFavori
     else if (element.requestFullscreen) await element.requestFullscreen().catch(() => undefined);
   };
 
+  const downloadBook = async () => {
+    if (downloadState === 'downloading') return;
+    setDownloadState('downloading');
+    try {
+      const response = await fetch(book.fileUrl);
+      if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
+      const file = await response.blob();
+      const objectUrl = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = book.filename || `${book.title}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      trackBookDownloaded(book);
+      setDownloadState('done');
+      window.setTimeout(() => setDownloadState('idle'), 2500);
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('Unable to download this book:', error);
+      setDownloadState('failed');
+      window.setTimeout(() => setDownloadState('idle'), 3500);
+    }
+  };
+
   const controls = <div className="pdf-reader-controls" aria-label="PDF reading controls">
     <div className="pdf-zoom-controls">
       <button type="button" className="pdf-control-button" aria-label="Zoom out" title="Zoom out" onClick={() => setZoom(value => Math.max(0.55, Math.round((value - 0.15) * 100) / 100))}><Minus size={17}/></button>
@@ -157,7 +184,10 @@ export default function PdfReader({ book, isFavorite, resumePage, onToggleFavori
     <header className="pdf-reader-header">
       <Link className="pdf-reader-back" to={'/books/'+encodeURIComponent(book.id)} aria-label="Back to book"><ArrowLeft size={19}/><span>Back to Book</span></Link>
       <strong title={book.title}>{book.title}</strong>
-      <button type="button" className={'pdf-reader-favorite '+(isFavorite?'is-favorite':'')} aria-label={isFavorite?'Remove from favorites':'Add to favorites'} title={isFavorite?'Remove from favorites':'Add to favorites'} onClick={onToggleFavorite}>{isFavorite?<Heart size={19} fill="currentColor"/>:<Bookmark size={19}/>}</button>
+      <div className="pdf-reader-actions">
+        <button type="button" className="pdf-reader-download" aria-label={downloadState === 'failed' ? 'Download failed. Try again.' : downloadState === 'downloading' ? 'Downloading book' : 'Download book'} title={downloadState === 'failed' ? 'Download failed. Try again.' : downloadState === 'downloading' ? 'Downloading…' : downloadState === 'done' ? 'Download started' : 'Download book'} disabled={downloadState === 'downloading'} onClick={downloadBook}><Download size={17}/><span>{downloadState === 'downloading' ? 'Downloading…' : downloadState === 'done' ? 'Downloaded' : downloadState === 'failed' ? 'Try again' : 'Download'}</span></button>
+        <button type="button" className={'pdf-reader-favorite '+(isFavorite?'is-favorite':'')} aria-label={isFavorite?'Remove from favorites':'Add to favorites'} title={isFavorite?'Remove from favorites':'Add to favorites'} onClick={onToggleFavorite}>{isFavorite?<Heart size={19} fill="currentColor"/>:<Bookmark size={19}/>}</button>
+      </div>
     </header>
     {controls}
     <section className="pdf-reader-viewport" ref={viewportRef} aria-label="PDF document">
