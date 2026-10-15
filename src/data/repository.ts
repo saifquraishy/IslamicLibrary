@@ -2,16 +2,17 @@ import type { Book } from '../types/book';
 let cache: Book[] | undefined;
 export async function getBooks(): Promise<Book[]> {
   if (cache) return cache;
-  const response = await fetch(`${import.meta.env.BASE_URL}data/books.json`);
+  const libraryBaseUrl = import.meta.env.VITE_LIBRARY_BASE_URL?.replace(/\/+$/, '');
+  const assetUrl = (path: string) => libraryBaseUrl
+    ? `${libraryBaseUrl}/${path.replace(/^\/+/, '')}`
+    : `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+  const response = await fetch(assetUrl('data/books.json'));
   if (!response.ok) throw new Error('Unable to load the book catalogue');
   const catalogue = await response.json() as Book[];
-  const booksBaseUrl = import.meta.env.VITE_BOOKS_BASE_URL?.replace(/\/+$/, '');
   cache = catalogue.map(book => ({
     ...book,
-    ...(book.coverUrl ? { coverUrl: `${import.meta.env.BASE_URL}${book.coverUrl.replace(/^\/+/, '')}` } : {}),
-    fileUrl: booksBaseUrl && book.fileUrl.startsWith('/books/')
-      ? `${booksBaseUrl}/${book.fileUrl.slice('/books/'.length)}`
-      : `${import.meta.env.BASE_URL}${book.fileUrl.replace(/^\/+/, '')}`,
+    ...(book.coverUrl ? { coverUrl: assetUrl(book.coverUrl) } : {}),
+    fileUrl: assetUrl(book.fileUrl),
   }));
   return cache;
 }
