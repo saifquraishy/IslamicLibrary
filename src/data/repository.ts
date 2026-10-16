@@ -1,11 +1,13 @@
-import type { Book } from '../types/book';
+import type { Book, Category } from '../types/book';
+import { categories as defaultCategories } from './categories';
 let cache: Book[] | undefined;
+let categoryCache: Category[] | undefined;
+function assetUrl(path: string) {
+  const libraryBaseUrl = import.meta.env.VITE_LIBRARY_BASE_URL?.replace(/\/+$/, '');
+  return libraryBaseUrl ? `${libraryBaseUrl}/${path.replace(/^\/+/, '')}` : `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+}
 export async function getBooks(): Promise<Book[]> {
   if (cache) return cache;
-  const libraryBaseUrl = import.meta.env.VITE_LIBRARY_BASE_URL?.replace(/\/+$/, '');
-  const assetUrl = (path: string) => libraryBaseUrl
-    ? `${libraryBaseUrl}/${path.replace(/^\/+/, '')}`
-    : `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
   const response = await fetch(assetUrl('data/books.json'));
   if (!response.ok) throw new Error('Unable to load the book catalogue');
   const catalogue = await response.json() as Book[];
@@ -15,6 +17,21 @@ export async function getBooks(): Promise<Book[]> {
     fileUrl: assetUrl(book.fileUrl),
   }));
   return cache;
+}
+export async function getCategories(): Promise<Category[]> {
+  if (categoryCache) return categoryCache;
+  try {
+    const response = await fetch(assetUrl('data/categories.json'));
+    if (response.ok) {
+      const value: unknown = await response.json();
+      if (Array.isArray(value)) {
+        categoryCache = value.filter((item): item is Category => typeof item === 'object' && item !== null && typeof (item as Category).name === 'string' && typeof (item as Category).icon === 'string');
+        return categoryCache;
+      }
+    }
+  } catch { /* Existing static categories remain available if R2 has no category file yet. */ }
+  categoryCache = defaultCategories;
+  return categoryCache;
 }
 export async function getBookById(id: string): Promise<Book | undefined> { return (await getBooks()).find(book => book.id === id); }
 export async function getBooksByCategory(category: string): Promise<Book[]> { return (await getBooks()).filter(book => book.category.toLowerCase() === category.toLowerCase()); }
